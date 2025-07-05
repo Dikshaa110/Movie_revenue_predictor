@@ -1,3 +1,67 @@
+# ======================
+# 1. PACKAGE VERIFICATION
+# ======================
+import os
+import sys
+import subprocess
+import pkg_resources
+
+# List of required packages
+REQUIRED_PACKAGES = {
+    'joblib==1.3.2',
+    'pandas==2.1.4',
+    'matplotlib==3.8.2',
+    'scikit-learn==1.3.2',
+    'streamlit==1.29.0'
+}
+
+def install_missing_packages():
+    """Install missing packages automatically"""
+    installed = {pkg.key for pkg in pkg_resources.working_set}
+    missing = {pkg.split('==')[0] for pkg in REQUIRED_PACKAGES} - installed
+    
+    if missing:
+        print(f"Installing missing packages: {missing}")
+        subprocess.check_call(
+            [sys.executable, "-m", "pip", "install", *missing],
+            stdout=subprocess.DEVNULL
+        )
+
+# Run before any other imports
+install_missing_packages()
+
+# ======================
+# 2. MAIN IMPORTS (Protected)
+# ======================
+try:
+    import streamlit as st
+    import pandas as pd
+    import joblib
+    import matplotlib.pyplot as plt
+    from sklearn.metrics import r2_score, mean_absolute_error
+    
+except ImportError as e:
+    print(f"Critical import error: {e}")
+    sys.exit(1)
+
+# ======================
+# 3. MODEL LOADING (Protected)
+# ======================
+try:
+    model_bundle = joblib.load("stacked_movie_revenue_model.joblib")
+    model = model_bundle["model"]
+    expected_features = model_bundle["features"]
+except Exception as e:
+    st.error(f"""
+    ## ⚠️ Model Loading Failed
+    **Error:** {str(e)}
+    
+    Please ensure:
+    1. `stacked_movie_revenue_model.joblib` exists in your project
+    2. The file is not corrupted
+    3. You have sufficient permissions
+    """)
+    st.stop()
 import streamlit as st
 import pandas as pd
 import joblib
